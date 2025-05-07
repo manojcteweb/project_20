@@ -1,42 +1,31 @@
 import pytest
-from unittest.mock import MagicMock, patch
-from notification_service import NotificationService
+from unittest.mock import patch, MagicMock
+from services.notification_service import NotificationService
 
-class TestNotificationService:
-    @pytest.fixture
-    def notification_service(self):
-        return NotificationService()
+@pytest.fixture
+def notification_service():
+    return NotificationService(email_endpoint="http://email.service/send", sms_endpoint="http://sms.service/send")
 
-    @patch('notification_service.NotificationService._send_email_or_sms')
-    def test_send_credit_check_result(self, mock_send_email_or_sms, notification_service):
-        user_id = "user123"
-        result = "approved"
+@patch('services.notification_service.requests.post')
+def test_send_email_notification(mock_post, notification_service):
+    # Mock the response to simulate a successful email send
+    mock_post.return_value.raise_for_status = MagicMock()
+    email_data = {'to': 'customer@example.com', 'subject': 'Loan Offer', 'body': 'Your loan offer details...'}
+    
+    # Call the send_email_notification method
+    notification_service.send_email_notification(email_data)
+    
+    # Verify that the post request was made with the correct parameters
+    mock_post.assert_called_once_with(notification_service.email_endpoint, json=email_data)
 
-        # Call the method under test
-        notification = notification_service.send_credit_check_result(user_id, result)
-
-        # Verify that the notification was created correctly
-        assert notification["user_id"] == user_id
-        assert notification["type"] == "credit_check"
-        assert notification["result"] == result
-
-        # Verify that the email or SMS was sent
-        formatted_message = f"Credit Check Result for User {user_id}: {result}"
-        mock_send_email_or_sms.assert_called_once_with(user_id, formatted_message)
-
-    @patch('notification_service.NotificationService._send_email_or_sms')
-    def test_send_verification_result(self, mock_send_email_or_sms, notification_service):
-        user_id = "user123"
-        status = "verified"
-
-        # Call the method under test
-        notification = notification_service.send_verification_result(user_id, status)
-
-        # Verify that the notification was created correctly
-        assert notification["user_id"] == user_id
-        assert notification["type"] == "document_verification"
-        assert notification["status"] == status
-
-        # Verify that the email or SMS was sent
-        formatted_message = f"Document Verification Result for User {user_id}: {status}"
-        mock_send_email_or_sms.assert_called_once_with(user_id, formatted_message)
+@patch('services.notification_service.requests.post')
+def test_send_sms_notification(mock_post, notification_service):
+    # Mock the response to simulate a successful SMS send
+    mock_post.return_value.raise_for_status = MagicMock()
+    sms_data = {'to': '+1234567890', 'message': 'Your loan offer details...'}
+    
+    # Call the send_sms_notification method
+    notification_service.send_sms_notification(sms_data)
+    
+    # Verify that the post request was made with the correct parameters
+    mock_post.assert_called_once_with(notification_service.sms_endpoint, json=sms_data)
