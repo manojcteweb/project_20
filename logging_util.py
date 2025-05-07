@@ -1,19 +1,17 @@
 import logging
 
-class LoggingUtil:
-    def __init__(self):
-        self.logger = logging.getLogger(__name__)
-        # Set up logging to a file
-        logging.basicConfig(filename='application.log', level=logging.INFO,
-                            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+def setup_logging(name):
+    """
+    Set up logging for the application.
 
-    def log_activity(self, activity_type, user_id, message):
-        """
-        Logs various activities for audit purposes.
-
-        :param activity_type: Type of activity (e.g., 'credit_check', 'document_verification')
-        :param user_id: ID of the user associated with the activity
-        :param message: Detailed message about the activity
-        """
-        log_message = f"Activity Type: {activity_type}, User ID: {user_id}, Message: {message}"
-        self.logger.info(log_message)
+    :param name: Name of the logger
+    :return: Configured logger
+    """
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.DEBUG)
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
+    return logger
